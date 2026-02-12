@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventário - AlgarEventos</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.3/dist/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        /* ========== HEADER ========== */
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 28px 40px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            font-size: 16px;
+            margin-top: 6px;
+            opacity: 0.85;
+        }
+
+        /* ========== TABS ========== */
+        .tabs-container {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            background: #fff;
+            border-bottom: 3px solid #e0e0e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+            position: sticky;
+            top: 98px;
+            z-index: 99;
+        }
+
+        .tab-btn {
+            padding: 18px 50px;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: #777;
+            transition: all 0.25s ease;
+            border-bottom: 4px solid transparent;
+            letter-spacing: 0.5px;
+        }
+
+        .tab-btn:hover {
+            color: #3498db;
+            background: #f7fafd;
+        }
+
+        .tab-btn.active {
+            color: #2c3e50;
+            border-bottom: 4px solid #3498db;
+            background: #f0f7ff;
+        }
+
+        /* ========== MAIN CONTENT ========== */
+        .main-content {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 0 30px 60px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .section-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title .icon {
+            font-size: 30px;
+        }
+
+        /* ========== SAVE SECTION PDF BTN ========== */
+        .save-section-pdf-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #c0392b, #96281b);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 3px 10px rgba(192,57,43,0.3);
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .save-section-pdf-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 16px rgba(192,57,43,0.4);
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .save-section-pdf-btn:active {
+            transform: translateY(0);
+        }
+
+        /* ========== TABLE CARD ========== */
+        .table-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            overflow: hidden;
+            border: 1px solid #e8e8e8;
+        }
+
+        .table-card-header {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .table-card-header label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #495057;
+            white-space: nowrap;
+        }
+
+        .table-card-header input {
+            flex: 1;
+            padding: 10px 16px;
+            font-size: 16px;
+            border: 2px solid #ced4da;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .table-card-header input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.15);
+        }
+
+        .table-card-header input::placeholder {
+            color: #adb5bd;
+            font-style: italic;
+        }
+
+        /* ========== DELETE TABLE BTN ========== */
+        .delete-table-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .delete-table-btn:hover {
+            background: #c0392b;
+        }
+
+        /* ========== TABLE ========== */
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .inventory-table thead th {
+            background: #2c3e50;
+            color: white;
+            padding: 14px 16px;
+            font-size: 15px;
+            font-weight: 600;
+            text-align: left;
+            letter-spacing: 0.3px;
+        }
+
+        .inventory-table thead th:last-child {
+            width: 60px;
+            text-align: center;
+        }
+
+        .inventory-table tbody tr {
+            border-bottom: 1px solid #e9ecef;
+            transition: background 0.15s;
+        }
+
+        .inventory-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .inventory-table tbody tr:nth-child(even) {
+            background: #fafbfc;
+        }
+
+        .inventory-table tbody tr:nth-child(even):hover {
+            background: #f0f1f3;
+        }
+
+        .inventory-table tbody td {
+            padding: 6px 8px;
+        }
+
+        .inventory-table tbody td input {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 15px;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            outline: none;
+            background: transparent;
+            transition: all 0.2s;
+        }
+
+        .inventory-table tbody td input:hover {
+            border-color: #dee2e6;
+            background: #fff;
+        }
+
+        .inventory-table tbody td input:focus {
+            border-color: #3498db;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+        }
+
+        .inventory-table tbody td input::placeholder {
+            color: #ccc;
+        }
+
+        /* Row number */
+        .row-number {
+            color: #adb5bd;
+            font-weight: 600;
+            font-size: 14px;
+            text-align: center;
+            width: 40px;
+            min-width: 40px;
+        }
+
+        /* Delete row button */
+        .delete-row-btn {
+            background: none;
+            border: none;
+            color: #dc3545;
+            font-size: 22px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-row-btn:hover {
+            background: #fee;
+            color: #c0392b;
+        }
+
+        /* ========== ADD ROW ========== */
+        .add-row-container {
+            padding: 12px 24px;
+            border-top: 1px solid #e9ecef;
+            background: #f8f9fa;
+        }
+
+        .add-row-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 22px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .add-row-btn:hover {
+            background: #219a52;
+        }
+
+        .add-row-btn .plus-icon {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        /* ========== OBSERVATIONS ========== */
+        .observations-container {
+            padding: 16px 24px 16px;
+            border-top: 2px solid #e9ecef;
+            background: #fffdf5;
+        }
+
+        .observations-container label {
+            display: block;
+            font-size: 15px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+
+        .observations-container textarea {
+            width: 100%;
+            min-height: 70px;
+            padding: 12px 16px;
+            font-size: 15px;
+            font-family: inherit;
+            border: 2px solid #ced4da;
+            border-radius: 8px;
+            outline: none;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+
+        .observations-container textarea:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.15);
+        }
+
+        .observations-container textarea::placeholder {
+            color: #adb5bd;
+            font-style: italic;
+        }
+
+        /* ========== RESPONSAVEL ========== */
+        .responsavel-container {
+            padding: 14px 24px 18px;
+            background: #f8fafb;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .responsavel-container label {
+            font-size: 15px;
+            font-weight: 600;
+            color: #495057;
+            white-space: nowrap;
+        }
+
+        .responsavel-container input {
+            flex: 1;
+            max-width: 400px;
+            padding: 10px 16px;
+            font-size: 15px;
+            border: 2px solid #ced4da;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .responsavel-container input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.15);
+        }
+
+        .responsavel-container input::placeholder {
+            color: #adb5bd;
+            font-style: italic;
+        }
+
+        /* ========== ADD TABLE BTN ========== */
+        .add-table-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 18px;
+            font-size: 17px;
+            font-weight: 600;
+            color: #3498db;
+            background: #fff;
+            border: 3px dashed #b0d4f1;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 30px;
+        }
+
+        .add-table-btn:hover {
+            background: #f0f7ff;
+            border-color: #3498db;
+            color: #2980b9;
+        }
+
+        .add-table-btn .plus-icon {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        /* ========== PDF OVERLAY ========== */
+        .pdf-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(44,62,80,0.85);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .pdf-overlay.active {
+            display: flex;
+        }
+
+        .pdf-overlay .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .pdf-overlay .overlay-text {
+            color: white;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* pdf-render-area no longer needed */
+
+        /* ========== SAVE STATUS ========== */
+        .save-status {
+            position: fixed;
+            bottom: 14px;
+            left: 14px;
+            font-size: 12px;
+            color: #aaa;
+            z-index: 50;
+            background: rgba(255,255,255,0.9);
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        /* ========== NOTIFICATION ========== */
+        .notification {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #27ae60;
+            color: white;
+            padding: 16px 28px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ========== SCROLLBAR ========== */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f0f2f5;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c0c5cc;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a0a5ac;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <h1>AlgarEventos - Inventário</h1>
+        <p>Sistema de Gestão de Inventário</p>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs-container">
+        <button class="tab-btn active" onclick="switchTab('dispensa', this)">&#128230; Dispensa</button>
+        <button class="tab-btn" onclick="switchTab('cozinha', this)">&#127859; Cozinha</button>
+        <button class="tab-btn" onclick="switchTab('pastelaria', this)">&#127856; Pastelaria</button>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+        <!-- DISPENSA -->
+        <div id="section-dispensa" class="section active">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="icon">&#128230;</span> Dispensa
+                </div>
+                <button class="save-section-pdf-btn" onclick="saveSectionPDF('dispensa')">
+                    &#128196; Guardar Tudo em PDF
+                </button>
+            </div>
+            <div id="tables-dispensa"></div>
+            <button class="add-table-btn" onclick="addTable('dispensa')">
+                <span class="plus-icon">+</span> Adicionar Nova Tabela
+            </button>
+        </div>
+
+        <!-- COZINHA -->
+        <div id="section-cozinha" class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="icon">&#127859;</span> Cozinha
+                </div>
+                <button class="save-section-pdf-btn" onclick="saveSectionPDF('cozinha')">
+                    &#128196; Guardar Tudo em PDF
+                </button>
+            </div>
+            <div id="tables-cozinha"></div>
+            <button class="add-table-btn" onclick="addTable('cozinha')">
+                <span class="plus-icon">+</span> Adicionar Nova Tabela
+            </button>
+        </div>
+
+        <!-- PASTELARIA -->
+        <div id="section-pastelaria" class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="icon">&#127856;</span> Pastelaria
+                </div>
+                <button class="save-section-pdf-btn" onclick="saveSectionPDF('pastelaria')">
+                    &#128196; Guardar Tudo em PDF
+                </button>
+            </div>
+            <div id="tables-pastelaria"></div>
+            <button class="add-table-btn" onclick="addTable('pastelaria')">
+                <span class="plus-icon">+</span> Adicionar Nova Tabela
+            </button>
+        </div>
+    </div>
+
+    <!-- PDF OVERLAY (loading screen) -->
+    <div id="pdf-overlay" class="pdf-overlay">
+        <div class="spinner"></div>
+        <div class="overlay-text">A gerar PDF, por favor aguarde...</div>
+    </div>
+
+    <!-- SAVE STATUS -->
+    <div id="save-status" class="save-status"></div>
+
+    <!-- NOTIFICATION -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // ============ TAB SWITCHING ============
+        function switchTab(sectionId, btn) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('section-' + sectionId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        // ============ SECTION LABELS ============
+        const sectionLabels = {
+            dispensa: 'Dispensa',
+            cozinha: 'Cozinha',
+            pastelaria: 'Pastelaria'
+        };
+
+        // ============ TABLE COUNTER ============
+        let tableCounter = 0;
+
+        // ============ SKIP AUTO-SAVE FLAG (used during restore) ============
+        let skipAutoSave = false;
+
+        // ============ ADD TABLE ============
+        function addTable(sectionId, skipScroll) {
+            tableCounter++;
+            const tableId = 'table-' + tableCounter;
+            const container = document.getElementById('tables-' + sectionId);
+
+            const card = document.createElement('div');
+            card.className = 'table-card';
+            card.id = tableId;
+            card.dataset.section = sectionId;
+
+            card.innerHTML = `
+                <div class="table-card-header">
+                    <label>Título:</label>
+                    <input type="text" class="table-title-input" placeholder="Ex: Frigorífico nº 5, Armário 3, etc.">
+                    <button class="delete-table-btn" onclick="deleteTable('${tableId}')" title="Apagar esta tabela">&#128465; Apagar</button>
+                </div>
+                <table class="inventory-table">
+                    <thead>
+                        <tr>
+                            <th style="width:40px; text-align:center;">Nº</th>
+                            <th style="width:32%;">Produto</th>
+                            <th style="width:20%;">Unidade de Medida</th>
+                            <th style="width:16%;">Quantidade</th>
+                            <th style="width:16%;">Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-${tableId}">
+                    </tbody>
+                </table>
+                <div class="add-row-container">
+                    <button class="add-row-btn" onclick="addRow('${tableId}')">
+                        <span class="plus-icon">+</span> Adicionar Linha
+                    </button>
+                </div>
+                <div class="observations-container">
+                    <label>Observações:</label>
+                    <textarea class="obs-textarea" placeholder="Escreva aqui as suas observações..."></textarea>
+                </div>
+                <div class="responsavel-container">
+                    <label>Responsável:</label>
+                    <input type="text" class="responsavel-input" placeholder="Nome do responsável">
+                </div>
+            `;
+
+            container.appendChild(card);
+
+            // Return tableId so restore can use it
+            return tableId;
+        }
+
+        // ============ ADD TABLE WITH DEFAULTS (user-facing, adds 5 rows + scroll) ============
+        function addTableDefault(sectionId) {
+            const tableId = addTable(sectionId);
+            for (let i = 0; i < 5; i++) {
+                addRow(tableId);
+            }
+            const card = document.getElementById(tableId);
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => {
+                card.querySelector('.table-title-input').focus();
+            }, 400);
+            autoSave();
+        }
+
+        // ============ DELETE TABLE ============
+        function deleteTable(tableId) {
+            if (confirm('Tem a certeza que deseja apagar esta tabela? Esta ação não pode ser desfeita.')) {
+                const el = document.getElementById(tableId);
+                if (el) el.remove();
+                showNotification('Tabela apagada com sucesso.');
+                autoSave();
+            }
+        }
+
+        // ============ ROW COUNTER PER TABLE ============
+        const rowCounters = {};
+
+        // ============ ADD ROW ============
+        function addRow(tableId) {
+            if (!rowCounters[tableId]) rowCounters[tableId] = 0;
+            rowCounters[tableId]++;
+
+            const tbody = document.getElementById('tbody-' + tableId);
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+                <td class="row-number">${rowCounters[tableId]}</td>
+                <td><input type="text" placeholder="Nome do produto"></td>
+                <td><input type="text" placeholder="kg, L, un, cx..."></td>
+                <td><input type="text" placeholder="0"></td>
+                <td><input type="text" placeholder="0"></td>
+                <td style="text-align:center;">
+                    <button class="delete-row-btn" onclick="deleteRow(this, '${tableId}')" title="Apagar linha">&#10006;</button>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        }
+
+        // ============ DELETE ROW ============
+        function deleteRow(btn, tableId) {
+            const tr = btn.closest('tr');
+            tr.remove();
+            renumberRows(tableId);
+            autoSave();
+        }
+
+        // ============ RENUMBER ROWS ============
+        function renumberRows(tableId) {
+            const tbody = document.getElementById('tbody-' + tableId);
+            const rows = tbody.querySelectorAll('tr');
+            rowCounters[tableId] = rows.length;
+            rows.forEach((row, index) => {
+                row.querySelector('.row-number').textContent = index + 1;
+            });
+        }
+
+        // ================================================================
+        // AUTO-SAVE TO LOCAL STORAGE
+        // ================================================================
+        let saveTimeout = null;
+
+        function autoSave() {
+            if (skipAutoSave) return;
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                const data = {};
+                ['dispensa', 'cozinha', 'pastelaria'].forEach(sectionId => {
+                    const container = document.getElementById('tables-' + sectionId);
+                    const cards = container.querySelectorAll('.table-card');
+                    const arr = [];
+                    cards.forEach(card => {
+                        const title = card.querySelector('.table-title-input').value;
+                        const obs = card.querySelector('.obs-textarea').value;
+                        const responsavel = card.querySelector('.responsavel-input').value;
+                        const tbody = document.getElementById('tbody-' + card.id);
+                        const rows = [];
+                        if (tbody) {
+                            tbody.querySelectorAll('tr').forEach(tr => {
+                                const inputs = tr.querySelectorAll('input');
+                                if (inputs.length >= 4) {
+                                    rows.push([inputs[0].value, inputs[1].value, inputs[2].value, inputs[3].value]);
+                                }
+                            });
+                        }
+                        arr.push({ title, obs, responsavel, rows });
+                    });
+                    data[sectionId] = arr;
+                });
+                localStorage.setItem('inventario_backup', JSON.stringify(data));
+                const now = new Date();
+                const t = now.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                document.getElementById('save-status').textContent = 'Guardado automaticamente às ' + t;
+            }, 800);
+        }
+
+        // Listen for any input changes in the whole page
+        document.addEventListener('input', function() {
+            autoSave();
+        });
+
+        // ================================================================
+        // RESTORE FROM LOCAL STORAGE
+        // ================================================================
+        function restoreData() {
+            const raw = localStorage.getItem('inventario_backup');
+            if (!raw) return false;
+
+            let data;
+            try {
+                data = JSON.parse(raw);
+            } catch (e) {
+                return false;
+            }
+
+            // Check if there's actual data
+            let hasData = false;
+            ['dispensa', 'cozinha', 'pastelaria'].forEach(s => {
+                if (data[s] && data[s].length > 0) {
+                    data[s].forEach(tbl => {
+                        if (tbl.title || tbl.obs || tbl.responsavel) hasData = true;
+                        if (tbl.rows && tbl.rows.length > 0) {
+                            tbl.rows.forEach(r => {
+                                if (r[0] || r[1] || r[2] || r[3]) hasData = true;
+                            });
+                        }
+                    });
+                }
+            });
+
+            if (!hasData) return false;
+
+            skipAutoSave = true;
+
+            ['dispensa', 'cozinha', 'pastelaria'].forEach(sectionId => {
+                const tables = data[sectionId] || [];
+                tables.forEach(tbl => {
+                    const tableId = addTable(sectionId, true);
+                    const card = document.getElementById(tableId);
+
+                    // Set title
+                    card.querySelector('.table-title-input').value = tbl.title || '';
+                    // Set observations
+                    card.querySelector('.obs-textarea').value = tbl.obs || '';
+                    // Set responsavel
+                    card.querySelector('.responsavel-input').value = tbl.responsavel || '';
+
+                    // Add rows
+                    const rows = tbl.rows || [];
+                    if (rows.length === 0) {
+                        // Add 5 empty rows
+                        for (let i = 0; i < 5; i++) addRow(tableId);
+                    } else {
+                        rows.forEach(r => {
+                            addRow(tableId);
+                            const tbody = document.getElementById('tbody-' + tableId);
+                            const lastRow = tbody.lastElementChild;
+                            const inputs = lastRow.querySelectorAll('input');
+                            if (inputs.length >= 4) {
+                                inputs[0].value = r[0] || '';
+                                inputs[1].value = r[1] || '';
+                                inputs[2].value = r[2] || '';
+                                inputs[3].value = r[3] || '';
+                            }
+                        });
+                    }
+                });
+            });
+
+            skipAutoSave = false;
+            return true;
+        }
+
+        // ================================================================
+        // SAVE ENTIRE SECTION PDF (using jsPDF + AutoTable)
+        // ================================================================
+        function saveSectionPDF(sectionId) {
+            const sectionLabel = sectionLabels[sectionId];
+            const container = document.getElementById('tables-' + sectionId);
+            const cards = container.querySelectorAll('.table-card');
+
+            if (cards.length === 0) {
+                alert('Não existem tabelas nesta secção. Adicione pelo menos uma tabela antes de guardar.');
+                return;
+            }
+
+            let hasAnyData = false;
+            const tablesData = [];
+
+            cards.forEach((card, cardIdx) => {
+                const title = card.querySelector('.table-title-input').value.trim() || 'Sem Título';
+                const obs = card.querySelector('.obs-textarea').value.trim();
+                const responsavel = card.querySelector('.responsavel-input').value.trim();
+                const tableId = card.id;
+                const tbody = document.getElementById('tbody-' + tableId);
+                const rows = tbody.querySelectorAll('tr');
+
+                const rowsData = [];
+                rows.forEach((row, idx) => {
+                    const inputs = row.querySelectorAll('input');
+                    const produto = inputs[0].value || '';
+                    const unidade = inputs[1].value || '';
+                    const quantidade = inputs[2].value || '';
+                    const total = inputs[3].value || '';
+
+                    if (produto || unidade || quantidade || total) {
+                        hasAnyData = true;
+                        rowsData.push([String(idx + 1), produto, unidade, quantidade, total]);
+                    }
+                });
+
+                tablesData.push({ title, obs, responsavel, rows: rowsData, index: cardIdx + 1 });
+            });
+
+            if (!hasAnyData) {
+                alert('Todas as tabelas estão vazias. Por favor, preencha pelo menos uma linha antes de guardar.');
+                return;
+            }
+
+            // Show overlay
+            const overlay = document.getElementById('pdf-overlay');
+            overlay.classList.add('active');
+
+            setTimeout(() => {
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                    const pageW = doc.internal.pageSize.getWidth();
+                    const pageH = doc.internal.pageSize.getHeight();
+                    const marginL = 14;
+                    const marginR = 14;
+                    const contentW = pageW - marginL - marginR;
+                    const safeBottom = 18; // reserved for footer
+
+                    const now = new Date();
+                    const dateStr = now.toLocaleDateString('pt-PT', {
+                        weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
+                    });
+                    const timeStr = now.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+                    const dateShort = now.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    const refCode = 'INV-' + sectionId.toUpperCase() + '-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
+
+                    // ---- Color palette ----
+                    const C = {
+                        darkBlue:   [44, 62, 80],
+                        medBlue:    [52, 152, 219],
+                        darkHeader: [26, 37, 47],
+                        lightGray:  [248, 249, 250],
+                        white:      [255, 255, 255],
+                        textDark:   [44, 62, 80],
+                        textMed:    [73, 80, 87],
+                        textLight:  [108, 117, 125],
+                        border:     [222, 226, 230],
+                        obsYellow:  [255, 253, 240],
+                        obsBorder:  [230, 220, 190],
+                        textBody:   [51, 51, 51],
+                        altRow:     [245, 247, 250],
+                        footerGray: [170, 170, 170]
+                    };
+
+                    // Helper: ensure cursor has space, else new page
+                    function ensureSpace(needed) {
+                        if (cursorY + needed > pageH - safeBottom) {
+                            doc.addPage();
+                            cursorY = 14;
+                        }
+                    }
+
+                    // ===== PAGE 1 HEADER =====
+                    doc.setFillColor(...C.darkBlue);
+                    doc.roundedRect(marginL, 12, contentW, 22, 2, 2, 'F');
+
+                    doc.setTextColor(...C.white);
+                    doc.setFontSize(18);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('AlgarEventos', marginL + 6, 24);
+
+                    doc.setFontSize(9);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(200, 210, 220);
+                    doc.text('Sistema de Gestão de Inventário', marginL + 6, 30);
+
+                    doc.setFontSize(8);
+                    doc.setTextColor(180, 190, 200);
+                    doc.text('DOCUMENTO OFICIAL', pageW - marginR - 6, 22, { align: 'right' });
+                    doc.text('Ref: ' + refCode, pageW - marginR - 6, 28, { align: 'right' });
+
+                    // Blue accent line
+                    doc.setDrawColor(...C.medBlue);
+                    doc.setLineWidth(0.8);
+                    doc.line(marginL, 37, pageW - marginR, 37);
+
+                    // Info boxes (3 columns: Secção, Data, Total Tabelas)
+                    const boxY = 40;
+                    const boxH = 14;
+                    const boxWidths = [contentW * 0.25, contentW * 0.50, contentW * 0.25];
+                    const infoLabels = ['SECÇÃO', 'DATA', 'TOTAL TABELAS'];
+                    const infoValues = [sectionLabel, dateStr, String(tablesData.length)];
+                    const infoFontSizes = [10, 9, 10];
+
+                    let boxX = marginL;
+                    for (let i = 0; i < 3; i++) {
+                        doc.setFillColor(...C.lightGray);
+                        doc.setDrawColor(...C.border);
+                        doc.setLineWidth(0.3);
+                        doc.rect(boxX, boxY, boxWidths[i], boxH, 'FD');
+
+                        doc.setFontSize(7);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setTextColor(...C.textMed);
+                        doc.text(infoLabels[i], boxX + 4, boxY + 5);
+
+                        doc.setFontSize(infoFontSizes[i]);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setTextColor(...C.textDark);
+                        doc.text(infoValues[i], boxX + 4, boxY + 11);
+
+                        boxX += boxWidths[i];
+                    }
+
+                    doc.setDrawColor(...C.medBlue);
+                    doc.setLineWidth(1);
+                    doc.line(marginL, boxY + boxH + 3, pageW - marginR, boxY + boxH + 3);
+
+                    let cursorY = boxY + boxH + 8;
+
+                    // ===== LOOP THROUGH EACH TABLE =====
+                    tablesData.forEach((tbl, tblIdx) => {
+                        if (tblIdx > 0) {
+                            doc.addPage();
+                            cursorY = 14;
+                        }
+
+                        // -- Table title bar --
+                        ensureSpace(20);
+                        doc.setFillColor(...C.darkBlue);
+                        doc.roundedRect(marginL, cursorY, contentW, 16, 2, 2, 'F');
+
+                        doc.setFontSize(7);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(170, 180, 190);
+                        doc.text('TABELA ' + tbl.index + ' DE ' + tablesData.length, marginL + 5, cursorY + 5.5);
+
+                        doc.setFontSize(12);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setTextColor(...C.white);
+                        doc.text(sectionLabel + ' \u2014 ' + tbl.title, marginL + 5, cursorY + 12.5);
+                        cursorY += 17;
+
+                        // -- Product table --
+                        if (tbl.rows.length === 0) {
+                            ensureSpace(12);
+                            doc.setFontSize(9);
+                            doc.setFont('helvetica', 'italic');
+                            doc.setTextColor(150, 150, 150);
+                            doc.text('Sem registos', marginL + 5, cursorY + 7);
+                            cursorY += 12;
+                        } else {
+                            doc.autoTable({
+                                startY: cursorY,
+                                margin: { left: marginL, right: marginR, bottom: safeBottom },
+                                head: [['N.\u00ba', 'PRODUTO', 'UN. MEDIDA', 'QUANTIDADE', 'TOTAL']],
+                                body: tbl.rows,
+                                theme: 'grid',
+                                headStyles: {
+                                    fillColor: C.darkHeader,
+                                    textColor: C.white,
+                                    fontSize: 8,
+                                    fontStyle: 'bold',
+                                    halign: 'center',
+                                    cellPadding: 3
+                                },
+                                columnStyles: {
+                                    0: { halign: 'center', cellWidth: 12, textColor: C.textLight, fontStyle: 'bold', fontSize: 8 },
+                                    1: { halign: 'left', fontSize: 8.5 },
+                                    2: { halign: 'center', fontSize: 8 },
+                                    3: { halign: 'center', fontSize: 8 },
+                                    4: { halign: 'center', fontStyle: 'bold', fontSize: 8.5 }
+                                },
+                                styles: {
+                                    lineColor: C.border,
+                                    lineWidth: 0.3,
+                                    cellPadding: 2.5,
+                                    textColor: C.textBody,
+                                    fontSize: 8.5,
+                                    overflow: 'linebreak'
+                                },
+                                alternateRowStyles: {
+                                    fillColor: C.altRow
+                                }
+                            });
+                            cursorY = doc.lastAutoTable.finalY + 2;
+                        }
+
+                        // -- Observations --
+                        if (tbl.obs) {
+                            // Reset all draw state explicitly
+                            doc.setFont('helvetica', 'normal');
+                            doc.setFontSize(8);
+                            const obsTextW = contentW - 12;
+                            const allObsLines = doc.splitTextToSize(tbl.obs, obsTextW);
+                            const lineH = 3.5;
+                            const headerH = 7;
+                            const padBottom = 4;
+
+                            // Paginate observations: draw in chunks that fit
+                            let lineIdx = 0;
+                            let isFirstChunk = true;
+
+                            while (lineIdx < allObsLines.length) {
+                                ensureSpace(headerH + lineH + padBottom + 2);
+                                const availH = (pageH - safeBottom) - cursorY;
+                                const linesAvail = Math.max(1, Math.floor((availH - headerH - padBottom) / lineH));
+                                const chunk = allObsLines.slice(lineIdx, lineIdx + linesAvail);
+                                const chunkH = headerH + (chunk.length * lineH) + padBottom;
+
+                                // Draw box background
+                                doc.setFillColor(...C.obsYellow);
+                                doc.setDrawColor(...C.obsBorder);
+                                doc.setLineWidth(0.3);
+                                doc.rect(marginL, cursorY, contentW, chunkH, 'FD');
+
+                                // Header label (only on first chunk)
+                                if (isFirstChunk) {
+                                    doc.setFontSize(7);
+                                    doc.setFont('helvetica', 'bold');
+                                    doc.setTextColor(...C.textMed);
+                                    doc.text('OBSERVAÇÕES:', marginL + 5, cursorY + 5);
+                                    isFirstChunk = false;
+                                } else {
+                                    doc.setFontSize(7);
+                                    doc.setFont('helvetica', 'italic');
+                                    doc.setTextColor(...C.textLight);
+                                    doc.text('(continuação)', marginL + 5, cursorY + 5);
+                                }
+
+                                // Body text
+                                doc.setFontSize(8);
+                                doc.setFont('helvetica', 'normal');
+                                doc.setTextColor(70, 70, 70);
+                                doc.text(chunk, marginL + 5, cursorY + headerH + 2);
+
+                                cursorY += chunkH + 1;
+                                lineIdx += linesAvail;
+                            }
+                        }
+
+                        // -- Responsável bar --
+                        ensureSpace(12);
+                        doc.setFillColor(...C.lightGray);
+                        doc.setDrawColor(...C.border);
+                        doc.setLineWidth(0.3);
+                        doc.rect(marginL, cursorY, contentW, 10, 'FD');
+
+                        doc.setFontSize(7);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setTextColor(...C.textMed);
+                        doc.text('RESPONSÁVEL:', marginL + 5, cursorY + 6.5);
+
+                        doc.setFontSize(9);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setTextColor(...C.textDark);
+                        doc.text(tbl.responsavel || 'Não indicado', marginL + 33, cursorY + 6.5);
+
+                        doc.setFontSize(7);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(...C.footerGray);
+                        doc.text(dateShort, pageW - marginR - 5, cursorY + 6.5, { align: 'right' });
+
+                        cursorY += 12;
+                    });
+
+                    // ===== CONSISTENT FOOTER ON ALL PAGES =====
+                    const totalPages = doc.internal.getNumberOfPages();
+                    for (let p = 1; p <= totalPages; p++) {
+                        doc.setPage(p);
+
+                        // Footer separator line
+                        doc.setDrawColor(...C.border);
+                        doc.setLineWidth(0.4);
+                        doc.line(marginL, pageH - 14, pageW - marginR, pageH - 14);
+
+                        // Left: company + compliance
+                        doc.setFontSize(6.5);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(...C.footerGray);
+                        doc.text('AlgarEventos \u2022 Inventário \u2022 ' + sectionLabel, marginL, pageH - 10);
+                        doc.text('Controlo interno e fiscalização (ACT / ASAE)', marginL, pageH - 7);
+
+                        // Right: page + date
+                        doc.setFontSize(6.5);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(...C.footerGray);
+                        doc.text('Pág. ' + p + ' de ' + totalPages, pageW - marginR, pageH - 10, { align: 'right' });
+                        doc.text(dateShort, pageW - marginR, pageH - 7, { align: 'right' });
+                    }
+
+                    // Save
+                    const fileName = 'Inventario ' + sectionLabel + ' - ' + dateShort.replace(/\//g, '-') + '.pdf';
+                    doc.save(fileName);
+
+                    overlay.classList.remove('active');
+                    showNotification('PDF guardado com sucesso! (' + tablesData.length + ' tabela' + (tablesData.length > 1 ? 's' : '') + ')');
+
+                } catch (err) {
+                    console.error('Erro ao gerar PDF:', err);
+                    overlay.classList.remove('active');
+                    alert('Ocorreu um erro ao gerar o PDF: ' + err.message);
+                }
+            }, 200);
+        }
+
+        // ============ ESCAPE HTML ============
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============ NOTIFICATION ============
+        function showNotification(message) {
+            const notif = document.getElementById('notification');
+            notif.textContent = message;
+            notif.classList.add('show');
+            setTimeout(() => {
+                notif.classList.remove('show');
+            }, 3000);
+        }
+
+        // ============ INITIALIZE ============
+        window.addEventListener('DOMContentLoaded', () => {
+            // Try to restore saved data first
+            const restored = restoreData();
+            if (!restored) {
+                // No saved data: create one empty table per section
+                ['dispensa', 'cozinha', 'pastelaria'].forEach(s => {
+                    const tid = addTable(s);
+                    for (let i = 0; i < 5; i++) addRow(tid);
+                });
+            }
+        });
+
+        // Update the add-table buttons to use the new function
+        document.querySelectorAll('.add-table-btn').forEach(btn => {
+            const section = btn.closest('.section').id.replace('section-', '');
+            btn.setAttribute('onclick', "addTableDefault('" + section + "')");
+        });
+    </script>
+</body>
+</html>
